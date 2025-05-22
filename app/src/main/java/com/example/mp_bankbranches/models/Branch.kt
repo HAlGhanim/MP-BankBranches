@@ -1,4 +1,4 @@
-package com.example.mp_bankbranches.data
+package com.example.mp_bankbranches.models
 
 data class Branch(
     val id: Int,
@@ -12,5 +12,7 @@ data class Branch(
 )
 
 enum class BranchType {
-    DIGITAL, PHYSICAL
+    HEADQUARTERS,
+    ATM,
+    BRANCH
 }
