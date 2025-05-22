@@ -40,7 +40,7 @@ fun BranchList(
             }
 
             Button(onClick = { viewModel.toggleFilter() }) {
-                Text(if (isFiltered) "Clear Filter" else "Filter 9AM-5PM")
+                Text(if (isFiltered) "Clear Filter" else "Filter")
             }
 
             Box {

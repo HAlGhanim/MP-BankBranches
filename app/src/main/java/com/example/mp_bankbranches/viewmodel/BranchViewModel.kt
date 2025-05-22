@@ -49,7 +49,7 @@ class BranchViewModel : ViewModel() {
         }
 
         if (_isFiltered.value) {
-            result = result.filter { it.hours.contains("9AM - 5PM") }
+            result = result.filter { it.hours.contains("24/7") }
         }
 
         _selectedBranchType.value?.let { type ->
