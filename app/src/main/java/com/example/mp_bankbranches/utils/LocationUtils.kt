@@ -9,14 +9,16 @@ import java.util.*
 object LocationUtils {
 
     fun extractLatLngFromUrl(url: String): Pair<Double, Double>? {
-        val regex = Regex("q=([\\-\\d.]+),([\\-\\d.]+)")
+        val regex = Regex("@([-\\d.]+),([-\\d.]+)")
         val match = regex.find(url)
+
         return match?.groupValues?.let {
             val lat = it.getOrNull(1)?.toDoubleOrNull()
             val lng = it.getOrNull(2)?.toDoubleOrNull()
             if (lat != null && lng != null) Pair(lat, lng) else null
         }
     }
+
 
     suspend fun getAddressFromCoordinates(context: Context, lat: Double, lng: Double): String {
         return withContext(Dispatchers.IO) {

@@ -20,15 +20,16 @@ fun BranchList(
     val favoriteId by viewModel.favoriteBranchId.collectAsState()
     val searchQuery by viewModel.searchQuery
     val isSorted by viewModel.isSorted
-    val isFiltered by viewModel.isFiltered
     val selectedBranchType by viewModel.selectedBranchType
+    val fromHour by viewModel.fromHour
+    val toHour by viewModel.toHour
 
     val allTypes = BranchType.entries
-    val typeOptions = listOf("All") + allTypes.map { it.name.capitalize() }
-    var expanded by remember { mutableStateOf(false) }
+    val typeOptions = listOf("All") + allTypes.map { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } }
+    var typeExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("Bank Branches", style = MaterialTheme.typography.headlineSmall)
+        Text("NBK Branches", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
 
         SearchBar(query = searchQuery, onQueryChange = { viewModel.updateSearchQuery(it) })
@@ -39,23 +40,19 @@ fun BranchList(
                 Text(if (isSorted) "Unsort" else "Sort A-Z")
             }
 
-            Button(onClick = { viewModel.toggleFilter() }) {
-                Text(if (isFiltered) "Clear Filter" else "Filter")
-            }
-
             Box {
-                Button(onClick = { expanded = true }) {
-                    Text(selectedBranchType?.name?.capitalize() ?: "All Types")
+                Button(onClick = { typeExpanded = true }) {
+                    Text(selectedBranchType?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "All")
                 }
 
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                DropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
                     typeOptions.forEach { label ->
                         DropdownMenuItem(
                             text = { Text(label) },
                             onClick = {
                                 val type = allTypes.find { it.name.equals(label, ignoreCase = true) }
                                 viewModel.selectBranchType(type)
-                                expanded = false
+                                typeExpanded = false
                             }
                         )
                     }
@@ -64,6 +61,22 @@ fun BranchList(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        TimePicker(
+            fromHour = fromHour,
+            toHour = toHour,
+            onFromChange = { viewModel.setHourRange(it, toHour) },
+            onToChange = { viewModel.setHourRange(fromHour, it) }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = { viewModel.setHourRange(null, null) },
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
+            Text("Clear Time Filter")
+        }
 
         LazyColumn {
             items(branches) { branch ->

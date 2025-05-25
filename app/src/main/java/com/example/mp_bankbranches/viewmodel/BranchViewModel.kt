@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.*
 
 class BranchViewModel : ViewModel() {
 
@@ -32,11 +33,13 @@ class BranchViewModel : ViewModel() {
     private val _isSorted = mutableStateOf(false)
     val isSorted: State<Boolean> = _isSorted
 
-    private val _isFiltered = mutableStateOf(false)
-    val isFiltered: State<Boolean> = _isFiltered
-
     private val _selectedBranchType = mutableStateOf<BranchType?>(null)
     val selectedBranchType: State<BranchType?> = _selectedBranchType
+
+    private val _fromHour = mutableStateOf<Float?>(null)
+    private val _toHour = mutableStateOf<Float?>(null)
+    val fromHour: State<Float?> = _fromHour
+    val toHour: State<Float?> = _toHour
 
     val filteredBranches: State<List<Branch>> = derivedStateOf {
         var result = branches.value
@@ -48,8 +51,13 @@ class BranchViewModel : ViewModel() {
             }
         }
 
-        if (_isFiltered.value) {
-            result = result.filter { it.hours.contains("24/7") }
+        if (_fromHour.value != null && _toHour.value != null) {
+            val from = _fromHour.value!!
+            val to = _toHour.value!!
+            result = result.filter {
+                val hours = parseHours(it.hours)
+                hours != null && hours.second > from && hours.first < to
+            }
         }
 
         _selectedBranchType.value?.let { type ->
@@ -71,12 +79,13 @@ class BranchViewModel : ViewModel() {
         _isSorted.value = !_isSorted.value
     }
 
-    fun toggleFilter() {
-        _isFiltered.value = !_isFiltered.value
-    }
-
     fun selectBranchType(type: BranchType?) {
         _selectedBranchType.value = type
+    }
+
+    fun setHourRange(from: Float?, to: Float?) {
+        _fromHour.value = from
+        _toHour.value = to
     }
 
     fun setFavoriteBranch(id: Int) {
@@ -90,6 +99,28 @@ class BranchViewModel : ViewModel() {
                 val address = LocationUtils.getAddressFromCoordinates(context, coords.first, coords.second)
                 _resolvedAddresses.value += (id to address)
             }
+        }
+    }
+
+    private fun parseHours(hoursStr: String): Pair<Float, Float>? {
+        return try {
+            if (hoursStr.contains("24/7", ignoreCase = true)) return Pair(0f, 24f)
+
+            val parts = hoursStr
+                .lowercase(Locale.getDefault())
+                .replace("am", "")
+                .replace("pm", "")
+                .split("-", limit = 2)
+                .map { it.trim() }
+
+            if (parts.size != 2) return null
+
+            val start = parts[0].replace(":", ".").toFloatOrNull() ?: return null
+            val end = parts[1].replace(":", ".").toFloatOrNull() ?: return null
+
+            Pair(start, end)
+        } catch (e: Exception) {
+            null
         }
     }
 }
